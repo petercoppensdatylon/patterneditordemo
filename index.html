@@ -8,11 +8,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800">
   <div class="max-w-6xl mx-auto p-6 space-y-6">
-    <header class="flex items-center justify-between">
+    <header class="flex items-center justify-between gap-3 flex-wrap">
       <h1 class="text-2xl font-bold">Striped Pattern Library</h1>
-      <button id="newPatternBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">
-        + New pattern
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="exportBtn" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Export JSON</button>
+        <input id="importInput" type="file" accept="application/json,.json" class="hidden" />
+        <button id="importBtn" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Import JSON</button>
+        <button id="newPatternBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">+ New pattern</button>
+      </div>
     </header>
 
     <!-- Editor Panel -->
@@ -69,18 +72,12 @@
           <!-- Live preview -->
           <div class="rounded-xl border p-3">
             <div class="font-medium mb-2">Live preview</div>
-            <div id="livePreview" class="flex items-center gap-4">
-              <!-- injected via JS -->
-            </div>
+            <div id="livePreview" class="flex items-center gap-4"></div>
           </div>
 
           <div class="col-span-1 md:col-span-3 flex items-center justify-end gap-3 pt-2">
-            <button id="resetForm" type="button" class="px-4 py-2 rounded-xl border hover:bg-slate-50">
-              Reset
-            </button>
-            <button id="saveBtn" type="submit" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700">
-              Save pattern
-            </button>
+            <button id="resetForm" type="button" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Reset</button>
+            <button id="saveBtn" type="submit" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700">Save pattern</button>
           </div>
 
           <input type="hidden" id="editingId" />
@@ -92,7 +89,7 @@
     <section>
       <h2 class="text-xl font-semibold mb-3">Your patterns</h2>
       <div id="emptyState" class="rounded-3xl border border-dashed p-8 text-center text-slate-500">
-        No patterns yet. Click <span class="font-medium">“New pattern”</span> to create one.
+        No patterns yet. Click <span class="font-medium">“New pattern”</span> to create one, or <span class="font-medium">Import JSON</span>.
       </div>
       <div id="libraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
@@ -106,12 +103,18 @@
         <button id="closeModal" class="text-slate-500 hover:text-slate-700">Close</button>
       </div>
       <div class="p-4">
-        <div class="mb-3">
+        <div class="mb-3 flex items-center gap-2">
           <button id="copyCode" class="px-3 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Copy</button>
+          <span id="modalMeta" class="text-xs text-slate-500"></span>
         </div>
         <textarea id="svgCode" class="w-full h-64 rounded-xl border p-3 font-mono text-xs"></textarea>
       </div>
     </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-xl bg-slate-900 text-white shadow">
+    <span id="toastText"></span>
   </div>
 
   <script>
@@ -137,15 +140,6 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
 
-    function hexToRgb(hex) {
-      const v = hex.replace('#', '');
-      const bigint = parseInt(v, 16);
-      const r = (v.length === 3) ? ((bigint >> 8) & 0xF) * 17 : (bigint >> 16) & 255;
-      const g = (v.length === 3) ? ((bigint >> 4) & 0xF) * 17 : (bigint >> 8) & 255;
-      const b = (v.length === 3) ? (bigint & 0xF) * 17 : bigint & 255;
-      return { r, g, b };
-    }
-
     function clamp(num, min, max) {
       return Math.max(min, Math.min(max, num));
     }
@@ -161,7 +155,6 @@
 
       const id = p.id || 'pattern';
 
-      // Using two vertical bands inside the tile; rotate the entire pattern for angle
       return `
 <pattern id="${id}" patternUnits="userSpaceOnUse" width="${total}" height="${total}" patternTransform="rotate(${angle})">
   <rect x="0" y="0" width="${total}" height="${total}" fill="transparent"/>
@@ -173,7 +166,6 @@
     // Full SVG snippet with <defs> to copy
     function buildCopyableSVG(p) {
       const def = buildPatternDef(p);
-      // Provide a tiny demo rect; users can discard it if they want.
       return `
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">
   <defs>
@@ -194,7 +186,6 @@
       defs.innerHTML = buildPatternDef(p);
       svg.appendChild(defs);
 
-      // Square
       const rect = document.createElementNS(svg.namespaceURI, 'rect');
       rect.setAttribute('x', '0');
       rect.setAttribute('y', '0');
@@ -204,7 +195,6 @@
       rect.setAttribute('fill', `url(#${p.id})`);
       svg.appendChild(rect);
 
-      // Circle
       const circle = document.createElementNS(svg.namespaceURI, 'circle');
       circle.setAttribute('cx', size + 12 + size / 2);
       circle.setAttribute('cy', size / 2);
@@ -239,6 +229,17 @@
 
     const svgModal = $('#svgModal');
     const svgCode = $('#svgCode');
+    const modalMeta = $('#modalMeta');
+
+    const toast = $('#toast');
+    const toastText = $('#toastText');
+
+    // Toast helper
+    function showToast(text, ms = 1400) {
+      toastText.textContent = text;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), ms);
+    }
 
     function getFormData() {
       return {
@@ -349,13 +350,68 @@
       renderLibrary();
     }
 
+    // --- Import/Export ---
+    function exportPatterns() {
+      const data = JSON.stringify(patterns, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      a.href = url;
+      a.download = `patterns-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('JSON exported');
+    }
+
+    function normalizeImport(payload) {
+      // Accept: array of patterns OR object { patterns: [...] }
+      if (Array.isArray(payload)) return payload;
+      if (payload && Array.isArray(payload.patterns)) return payload.patterns;
+      // Single object?
+      if (payload && typeof payload === 'object' && 'name' in payload) return [payload];
+      return [];
+    }
+
+    function validatePattern(obj) {
+      const p = { ...obj };
+      // Ensure required fields with fallbacks
+      p.id = typeof p.id === 'string' && p.id ? p.id : uid();
+      p.name = typeof p.name === 'string' ? p.name : 'Imported';
+      p.angle = Number.isFinite(Number(p.angle)) ? Number(p.angle) : 45;
+      p.fgWidth = Number.isFinite(Number(p.fgWidth)) ? Number(p.fgWidth) : 6;
+      p.fgColor = typeof p.fgColor === 'string' ? p.fgColor : '#111827';
+      p.fgOpacity = Number.isFinite(Number(p.fgOpacity)) ? Number(p.fgOpacity) : 100;
+      p.bgWidth = Number.isFinite(Number(p.bgWidth)) ? Number(p.bgWidth) : 6;
+      p.bgColor = typeof p.bgColor === 'string' ? p.bgColor : '#e5e7eb';
+      p.bgOpacity = Number.isFinite(Number(p.bgOpacity)) ? Number(p.bgOpacity) : 100;
+      return p;
+    }
+
+    function mergeImported(list) {
+      let added = 0;
+      for (const raw of list) {
+        const valid = validatePattern(raw);
+        // Avoid ID collision by regenerating if the same id exists
+        if (patterns.some(x => x.id === valid.id)) {
+          valid.id = uid();
+        }
+        patterns.push(valid); // add to the end to preserve current order
+        added++;
+      }
+      savePatterns(patterns);
+      renderLibrary();
+      return added;
+    }
+
     // --- Event wiring ---
     $('#newPatternBtn').addEventListener('click', () => openEditor(true));
 
     $('#closeEditor').addEventListener('click', closeEditor);
     $('#resetForm').addEventListener('click', clearForm);
 
-    // Live update preview on any change
     [nameInput, angleInput, fgWidthInput, fgColorInput, fgOpacityInput, bgWidthInput, bgColorInput, bgOpacityInput]
       .forEach(el => el.addEventListener('input', renderLivePreview));
 
@@ -369,6 +425,7 @@
       upsertPattern(p);
       closeEditor();
       clearForm();
+      showToast('Pattern saved');
     });
 
     libraryGrid.addEventListener('click', (e) => {
@@ -382,9 +439,13 @@
       if (action === 'edit') {
         openEditor(false, p);
       } else if (action === 'delete') {
-        if (confirm(`Remove pattern “${p.name}”?`)) deletePattern(id);
+        if (confirm(`Remove pattern “${p.name}”?`)) {
+          deletePattern(id);
+          showToast('Pattern removed');
+        }
       } else if (action === 'svg') {
         svgCode.value = buildCopyableSVG(p);
+        modalMeta.textContent = p.name ? `Pattern: ${p.name}` : '';
         svgModal.classList.remove('hidden');
         svgModal.classList.add('flex');
       }
@@ -402,14 +463,45 @@
         const old = btn.textContent;
         btn.textContent = 'Copied!';
         setTimeout(() => (btn.textContent = old), 900);
+        showToast('Copied to clipboard');
       } catch {
         alert('Could not copy to clipboard.');
       }
     });
 
+    // Import/Export buttons
+    $('#exportBtn').addEventListener('click', exportPatterns);
+    const importInput = $('#importInput');
+    $('#importBtn').addEventListener('click', () => importInput.click());
+
+    importInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const list = normalizeImport(payload);
+        if (!list.length) {
+          alert('No patterns found in this JSON. Expected an array of pattern objects or {"patterns": [...]}');
+          importInput.value = '';
+          return;
+        }
+        const added = mergeImported(list);
+        showToast(`Imported ${added} pattern${added === 1 ? '' : 's'}`);
+      } catch (err) {
+        console.error(err);
+        alert('Invalid JSON file.');
+      } finally {
+        importInput.value = '';
+      }
+    });
+
     // --- Initial render ---
-    renderLibrary();
-    renderLivePreview();
+    function renderAll() {
+      renderLibrary();
+      renderLivePreview();
+    }
+    renderAll();
   </script>
 </body>
 </html>
