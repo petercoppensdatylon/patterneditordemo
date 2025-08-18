@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Striped Pattern Library (Plain JS + Tailwind)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <div class="max-w-6xl mx-auto p-6 space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Striped Pattern Library</h1>
+      <button id="newPatternBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">
+        + New pattern
+      </button>
+    </header>
+
+    <!-- Editor Panel -->
+    <section id="editorSection" class="hidden">
+      <div class="rounded-3xl bg-white shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="formTitle" class="text-xl font-semibold">Create pattern</h2>
+          <button id="closeEditor" class="text-slate-500 hover:text-slate-700">Close</button>
+        </div>
+
+        <form id="patternForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Name -->
+          <div class="col-span-1 md:col-span-3">
+            <label class="block text-sm font-medium mb-1">Name</label>
+            <input id="name" type="text" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <!-- Angle -->
+          <div>
+            <label class="block text-sm font-medium mb-1">Line angle (°)</label>
+            <input id="angle" type="number" step="1" min="-360" max="360" value="45"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <!-- Foreground stripe -->
+          <div class="rounded-xl border p-3">
+            <div class="font-medium mb-2">Foreground stripe</div>
+            <label class="block text-xs mb-1">Width (px)</label>
+            <input id="fgWidth" type="number" step="0.5" min="0.5" value="6"
+              class="w-full mb-2 rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs mb-1">Color</label>
+            <input id="fgColor" type="color" value="#111827"
+              class="w-full mb-2 rounded-lg border border-slate-300 h-10 px-2 py-1" />
+            <label class="block text-xs mb-1">Opacity (0–100)</label>
+            <input id="fgOpacity" type="number" min="0" max="100" value="100"
+              class="w-full rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <!-- Background stripe -->
+          <div class="rounded-xl border p-3">
+            <div class="font-medium mb-2">Background stripe</div>
+            <label class="block text-xs mb-1">Width (px)</label>
+            <input id="bgWidth" type="number" step="0.5" min="0.5" value="6"
+              class="w-full mb-2 rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <label class="block text-xs mb-1">Color</label>
+            <input id="bgColor" type="color" value="#e5e7eb"
+              class="w-full mb-2 rounded-lg border border-slate-300 h-10 px-2 py-1" />
+            <label class="block text-xs mb-1">Opacity (0–100)</label>
+            <input id="bgOpacity" type="number" min="0" max="100" value="100"
+              class="w-full rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <!-- Live preview -->
+          <div class="rounded-xl border p-3">
+            <div class="font-medium mb-2">Live preview</div>
+            <div id="livePreview" class="flex items-center gap-4">
+              <!-- injected via JS -->
+            </div>
+          </div>
+
+          <div class="col-span-1 md:col-span-3 flex items-center justify-end gap-3 pt-2">
+            <button id="resetForm" type="button" class="px-4 py-2 rounded-xl border hover:bg-slate-50">
+              Reset
+            </button>
+            <button id="saveBtn" type="submit" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700">
+              Save pattern
+            </button>
+          </div>
+
+          <input type="hidden" id="editingId" />
+        </form>
+      </div>
+    </section>
+
+    <!-- Library -->
+    <section>
+      <h2 class="text-xl font-semibold mb-3">Your patterns</h2>
+      <div id="emptyState" class="rounded-3xl border border-dashed p-8 text-center text-slate-500">
+        No patterns yet. Click <span class="font-medium">“New pattern”</span> to create one.
+      </div>
+      <div id="libraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+  </div>
+
+  <!-- Modal for SVG -->
+  <div id="svgModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-3xl w-full">
+      <div class="flex items-center justify-between border-b p-4">
+        <h3 class="font-semibold">SVG Pattern Code</h3>
+        <button id="closeModal" class="text-slate-500 hover:text-slate-700">Close</button>
+      </div>
+      <div class="p-4">
+        <div class="mb-3">
+          <button id="copyCode" class="px-3 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Copy</button>
+        </div>
+        <textarea id="svgCode" class="w-full h-64 rounded-xl border p-3 font-mono text-xs"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Utility helpers ---
+    const $ = (sel, el = document) => el.querySelector(sel);
+    const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+
+    const STORAGE_KEY = 'striped-patterns-v1';
+
+    function uid() {
+      return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function loadPatterns() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function savePatterns(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function hexToRgb(hex) {
+      const v = hex.replace('#', '');
+      const bigint = parseInt(v, 16);
+      const r = (v.length === 3) ? ((bigint >> 8) & 0xF) * 17 : (bigint >> 16) & 255;
+      const g = (v.length === 3) ? ((bigint >> 4) & 0xF) * 17 : (bigint >> 8) & 255;
+      const b = (v.length === 3) ? (bigint & 0xF) * 17 : bigint & 255;
+      return { r, g, b };
+    }
+
+    function clamp(num, min, max) {
+      return Math.max(min, Math.min(max, num));
+    }
+
+    // Build the <pattern> markup string (minimal, reusable)
+    function buildPatternDef(p) {
+      const fgO = clamp((Number(p.fgOpacity) || 0) / 100, 0, 1);
+      const bgO = clamp((Number(p.bgOpacity) || 0) / 100, 0, 1);
+      const angle = Number(p.angle) || 0;
+      const fgW = Math.max(0.5, Number(p.fgWidth) || 0.5);
+      const bgW = Math.max(0.5, Number(p.bgWidth) || 0.5);
+      const total = fgW + bgW;
+
+      const id = p.id || 'pattern';
+
+      // Using two vertical bands inside the tile; rotate the entire pattern for angle
+      return `
+<pattern id="${id}" patternUnits="userSpaceOnUse" width="${total}" height="${total}" patternTransform="rotate(${angle})">
+  <rect x="0" y="0" width="${total}" height="${total}" fill="transparent"/>
+  <rect x="0" y="0" width="${fgW}" height="${total}" fill="${p.fgColor}" fill-opacity="${fgO}"/>
+  <rect x="${fgW}" y="0" width="${bgW}" height="${total}" fill="${p.bgColor}" fill-opacity="${bgO}"/>
+</pattern>`.trim();
+    }
+
+    // Full SVG snippet with <defs> to copy
+    function buildCopyableSVG(p) {
+      const def = buildPatternDef(p);
+      // Provide a tiny demo rect; users can discard it if they want.
+      return `
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">
+  <defs>
+    ${def}
+  </defs>
+  <rect x="0" y="0" width="120" height="80" fill="url(#${p.id})" />
+</svg>`.trim();
+    }
+
+    // Create a preview node (square + circle)
+    function createPreviewSVG(p, size = 56) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${size * 2 + 12} ${size}`);
+      svg.setAttribute('width', size * 2 + 12);
+      svg.setAttribute('height', size);
+
+      const defs = document.createElementNS(svg.namespaceURI, 'defs');
+      defs.innerHTML = buildPatternDef(p);
+      svg.appendChild(defs);
+
+      // Square
+      const rect = document.createElementNS(svg.namespaceURI, 'rect');
+      rect.setAttribute('x', '0');
+      rect.setAttribute('y', '0');
+      rect.setAttribute('width', size);
+      rect.setAttribute('height', size);
+      rect.setAttribute('rx', '10');
+      rect.setAttribute('fill', `url(#${p.id})`);
+      svg.appendChild(rect);
+
+      // Circle
+      const circle = document.createElementNS(svg.namespaceURI, 'circle');
+      circle.setAttribute('cx', size + 12 + size / 2);
+      circle.setAttribute('cy', size / 2);
+      circle.setAttribute('r', size / 2);
+      circle.setAttribute('fill', `url(#${p.id})`);
+      svg.appendChild(circle);
+
+      return svg;
+    }
+
+    // --- State & UI ---
+    let patterns = loadPatterns();
+
+    const editorSection = $('#editorSection');
+    const form = $('#patternForm');
+    const formTitle = $('#formTitle');
+    const editingIdInput = $('#editingId');
+
+    const nameInput = $('#name');
+    const angleInput = $('#angle');
+    const fgWidthInput = $('#fgWidth');
+    const fgColorInput = $('#fgColor');
+    const fgOpacityInput = $('#fgOpacity');
+    const bgWidthInput = $('#bgWidth');
+    const bgColorInput = $('#bgColor');
+    const bgOpacityInput = $('#bgOpacity');
+
+    const livePreview = $('#livePreview');
+
+    const libraryGrid = $('#libraryGrid');
+    const emptyState = $('#emptyState');
+
+    const svgModal = $('#svgModal');
+    const svgCode = $('#svgCode');
+
+    function getFormData() {
+      return {
+        id: editingIdInput.value || uid(),
+        name: nameInput.value.trim() || 'Untitled',
+        angle: Number(angleInput.value || 0),
+        fgWidth: Number(fgWidthInput.value || 6),
+        fgColor: fgColorInput.value || '#000000',
+        fgOpacity: Number(fgOpacityInput.value || 100),
+        bgWidth: Number(bgWidthInput.value || 6),
+        bgColor: bgColorInput.value || '#ffffff',
+        bgOpacity: Number(bgOpacityInput.value || 100),
+      };
+    }
+
+    function setFormData(p) {
+      editingIdInput.value = p.id || '';
+      nameInput.value = p.name || '';
+      angleInput.value = p.angle ?? 45;
+      fgWidthInput.value = p.fgWidth ?? 6;
+      fgColorInput.value = p.fgColor || '#111827';
+      fgOpacityInput.value = p.fgOpacity ?? 100;
+      bgWidthInput.value = p.bgWidth ?? 6;
+      bgColorInput.value = p.bgColor || '#e5e7eb';
+      bgOpacityInput.value = p.bgOpacity ?? 100;
+      renderLivePreview();
+    }
+
+    function clearForm() {
+      editingIdInput.value = '';
+      nameInput.value = '';
+      angleInput.value = 45;
+      fgWidthInput.value = 6;
+      fgColorInput.value = '#111827';
+      fgOpacityInput.value = 100;
+      bgWidthInput.value = 6;
+      bgColorInput.value = '#e5e7eb';
+      bgOpacityInput.value = 100;
+      renderLivePreview();
+    }
+
+    function openEditor(createMode = true, pattern = null) {
+      editorSection.classList.remove('hidden');
+      formTitle.textContent = createMode ? 'Create pattern' : 'Edit pattern';
+      if (createMode || !pattern) clearForm();
+      else setFormData(pattern);
+    }
+
+    function closeEditor() {
+      editorSection.classList.add('hidden');
+    }
+
+    function renderLivePreview() {
+      livePreview.innerHTML = '';
+      const p = getFormData();
+      const svg = createPreviewSVG(p, 72);
+      livePreview.appendChild(svg);
+    }
+
+    function renderLibrary() {
+      libraryGrid.innerHTML = '';
+      if (!patterns.length) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      patterns.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl bg-white shadow p-4 flex items-center gap-4';
+
+        const preview = createPreviewSVG(p, 56);
+
+        const info = document.createElement('div');
+        info.className = 'flex-1 min-w-0';
+        info.innerHTML = `
+          <div class="font-semibold truncate">${p.name}</div>
+          <div class="text-xs text-slate-500">Angle ${p.angle}°, fg ${p.fgWidth}px, bg ${p.bgWidth}px</div>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'flex flex-col gap-2';
+        actions.innerHTML = `
+          <button data-id="${p.id}" data-action="edit" class="px-3 py-1 rounded-lg border hover:bg-slate-50">Edit</button>
+          <button data-id="${p.id}" data-action="svg" class="px-3 py-1 rounded-lg border hover:bg-slate-50">Show SVG</button>
+          <button data-id="${p.id}" data-action="delete" class="px-3 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700">Remove</button>
+        `;
+
+        card.appendChild(preview);
+        card.appendChild(info);
+        card.appendChild(actions);
+
+        libraryGrid.appendChild(card);
+      });
+    }
+
+    function upsertPattern(p) {
+      const i = patterns.findIndex(x => x.id === p.id);
+      if (i === -1) patterns.unshift(p);
+      else patterns[i] = p;
+      savePatterns(patterns);
+      renderLibrary();
+    }
+
+    function deletePattern(id) {
+      patterns = patterns.filter(p => p.id !== id);
+      savePatterns(patterns);
+      renderLibrary();
+    }
+
+    // --- Event wiring ---
+    $('#newPatternBtn').addEventListener('click', () => openEditor(true));
+
+    $('#closeEditor').addEventListener('click', closeEditor);
+    $('#resetForm').addEventListener('click', clearForm);
+
+    // Live update preview on any change
+    [nameInput, angleInput, fgWidthInput, fgColorInput, fgOpacityInput, bgWidthInput, bgColorInput, bgOpacityInput]
+      .forEach(el => el.addEventListener('input', renderLivePreview));
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const p = getFormData();
+      if (!p.name) {
+        alert('Please provide a name.');
+        return;
+      }
+      upsertPattern(p);
+      closeEditor();
+      clearForm();
+    });
+
+    libraryGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      const p = patterns.find(x => x.id === id);
+      if (!p) return;
+
+      if (action === 'edit') {
+        openEditor(false, p);
+      } else if (action === 'delete') {
+        if (confirm(`Remove pattern “${p.name}”?`)) deletePattern(id);
+      } else if (action === 'svg') {
+        svgCode.value = buildCopyableSVG(p);
+        svgModal.classList.remove('hidden');
+        svgModal.classList.add('flex');
+      }
+    });
+
+    $('#closeModal').addEventListener('click', () => {
+      svgModal.classList.add('hidden');
+      svgModal.classList.remove('flex');
+    });
+
+    $('#copyCode').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(svgCode.value);
+        const btn = $('#copyCode');
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = old), 900);
+      } catch {
+        alert('Could not copy to clipboard.');
+      }
+    });
+
+    // --- Initial render ---
+    renderLibrary();
+    renderLivePreview();
+  </script>
+</body>
+</html>
