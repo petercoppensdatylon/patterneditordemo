@@ -23,10 +23,22 @@
       <aside class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold">Your palettes</h2>
-          <button id="newPaletteBtn" type="button" class="p-2 rounded-xl border hover:bg-slate-50" title="New palette"><i data-lucide="plus" class="w-4 h-4"></i></button>
+          <button id="newPaletteBtn" type="button"
+                  class="inline-flex items-center justify-center p-2 rounded-xl border bg-white shadow-sm hover:shadow transition"
+                  title="New palette">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
         </div>
         <div id="paletteList" class="space-y-2"></div>
-        <div id="noPalettes" class="text-slate-500 text-sm text-center py-6">No palettes yet. Click <span class="font-medium">＋</span> above or <span class="font-medium">Import JSON</span>.</div>
+        <div id="noPalettes" class="rounded-2xl border border-dashed text-slate-600 text-sm text-center py-8 px-4 bg-white/60">
+          <div class="mb-3">No palettes yet.</div>
+          <button id="createFirstBtn" type="button"
+                  class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>New palette</span>
+          </button>
+          <div class="mt-3 text-xs text-slate-500">or Import JSON</div>
+        </div>
       </aside>
 
       <!-- Editor -->
@@ -165,7 +177,12 @@
     function buildPatternSVG(p){
       const id = p.id || ('pat_'+uid());
       const def = patternDef({ ...p, id });
-      return (`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">\n  <defs>\n    ${def}\n  </defs>\n  <rect x="0" y="0" width="120" height="80" fill="url(#${id})" />\n</svg>`).trim();
+      return (`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">
+  <defs>
+    ${def}
+  </defs>
+  <rect x="0" y="0" width="120" height="80" fill="url(#${id})" />
+</svg>`).trim();
     }
 
     function patternPreview(p, size=28){
@@ -422,7 +439,14 @@
     });
 
     // ===== Init =====
+    // Ensure icons render immediately
+    document.addEventListener('DOMContentLoaded', () => { try { lucide.createIcons(); } catch(e){} });
+
     renderSidebar(); if(currentId) openEditor(); resetForm(); renderItemPreview();
+
+    // Hook the empty-state "New palette" button (exists only when empty)
+    const firstBtn = document.getElementById('createFirstBtn');
+    if (firstBtn) firstBtn.addEventListener('click', () => newPaletteBtn.click());
   </script>
 </body>
 </html>
