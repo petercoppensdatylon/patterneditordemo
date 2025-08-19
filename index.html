@@ -2,506 +2,362 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Striped Pattern Library (Plain JS + Tailwind)</title>
+  <title>Palette Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50 text-slate-800">
-  <div class="max-w-6xl mx-auto p-6 space-y-6">
-    <header class="flex items-center justify-between gap-3 flex-wrap">
-      <h1 class="text-2xl font-bold">Striped Pattern Library</h1>
+  <div class="max-w-7xl mx-auto p-6 space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-3">
+      <h1 class="text-2xl font-bold">Palette Builder</h1>
       <div class="flex items-center gap-2">
-        <button id="exportBtn" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Export JSON</button>
+        <button id="exportBtn" type="button" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Export JSON</button>
         <input id="importInput" type="file" accept="application/json,.json" class="hidden" />
-        <button id="importBtn" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Import JSON</button>
-        <button id="newPatternBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">+ New pattern</button>
+        <button id="importBtn" type="button" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Import JSON</button>
+        <button id="newPaletteBtn" type="button" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">+ New palette</button>
       </div>
     </header>
 
-    <!-- Editor Panel -->
-    <section id="editorSection" class="hidden">
-      <div class="rounded-3xl bg-white shadow p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 id="formTitle" class="text-xl font-semibold">Create pattern</h2>
-          <button id="closeEditor" class="text-slate-500 hover:text-slate-700">Close</button>
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Sidebar -->
+      <aside class="space-y-3">
+        <h2 class="text-lg font-semibold">Your palettes</h2>
+        <div id="paletteList" class="space-y-2"></div>
+        <div id="noPalettes" class="text-slate-500 text-sm text-center py-6">No palettes yet. Click <span class="font-medium">New palette</span> or <span class="font-medium">Import JSON</span>.</div>
+      </aside>
+
+      <!-- Editor -->
+      <section class="md:col-span-2">
+        <div id="editorSection" class="hidden rounded-3xl bg-white shadow p-6 space-y-5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <input id="paletteName" type="text" class="rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Palette name" />
+              <button id="savePaletteName" type="button" class="px-3 py-2 rounded-xl border hover:bg-slate-50">Save name</button>
+            </div>
+            <button id="deletePalette" type="button" class="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Delete palette</button>
+          </div>
+
+          <!-- Add / Edit Item with Live Preview -->
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 rounded-2xl border p-4 space-y-4">
+              <h3 class="font-semibold">Add / Edit Item</h3>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div class="col-span-1 space-y-2">
+                  <label class="text-sm font-medium">Type</label>
+                  <select id="itemType" class="w-full rounded-xl border px-2 py-2">
+                    <option value="rgb">Solid RGB</option>
+                    <option value="pattern">Pattern</option>
+                  </select>
+                </div>
+
+                <!-- Solid options -->
+                <div id="solidOptions" class="col-span-1 space-y-2">
+                  <label class="text-sm font-medium">Color</label>
+                  <input id="solidColor" type="color" value="#4f46e5" class="w-full h-10 border rounded" />
+                  <label class="text-sm font-medium">Opacity</label>
+                  <div class="flex items-center gap-2">
+                    <input id="solidOpacity" type="range" min="0" max="100" value="100" class="flex-1" />
+                    <input id="solidOpacityNum" type="number" min="0" max="100" value="100" class="w-16 rounded border px-2 py-1" />
+                  </div>
+                </div>
+
+                <!-- Pattern options -->
+                <div id="patternOptions" class="col-span-1 space-y-2 hidden">
+                  <label class="text-sm font-medium">Angle</label>
+                  <input id="patternAngle" type="number" value="45" class="w-full rounded border px-2 py-1" />
+                  <label class="text-sm font-medium">FG Width</label>
+                  <input id="patternFgWidth" type="number" value="6" class="w-full rounded border px-2 py-1" />
+                  <label class="text-sm font-medium">FG Color</label>
+                  <input id="patternFgColor" type="color" value="#111827" class="w-full h-10 border rounded" />
+                  <label class="text-sm font-medium">FG Opacity</label>
+                  <input id="patternFgOpacity" type="number" value="100" class="w-full rounded border px-2 py-1" />
+                  <label class="text-sm font-medium">BG Width</label>
+                  <input id="patternBgWidth" type="number" value="6" class="w-full rounded border px-2 py-1" />
+                  <label class="text-sm font-medium">BG Color</label>
+                  <input id="patternBgColor" type="color" value="#e5e7eb" class="w-full h-10 border rounded" />
+                  <label class="text-sm font-medium">BG Opacity</label>
+                  <input id="patternBgOpacity" type="number" value="100" class="w-full rounded border px-2 py-1" />
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-3">
+                <button id="resetItem" type="button" class="px-3 py-2 rounded-xl border hover:bg-slate-50">Reset</button>
+                <button id="saveItem" type="button" class="px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Add item</button>
+              </div>
+            </div>
+
+            <!-- Compact Live Item Preview (no title) -->
+            <div class="rounded-2xl border p-3">
+              <div id="itemPreview" class="w-16 h-16 rounded-xl border shadow-inner"></div>
+            </div>
+          </div>
         </div>
-
-        <form id="patternForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Name -->
-          <div class="col-span-1 md:col-span-3">
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input id="name" type="text" required
-              class="w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          <!-- Angle -->
-          <div>
-            <label class="block text-sm font-medium mb-1">Line angle (°)</label>
-            <input id="angle" type="number" step="1" min="-360" max="360" value="45"
-              class="w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          <!-- Foreground stripe -->
-          <div class="rounded-xl border p-3">
-            <div class="font-medium mb-2">Foreground stripe</div>
-            <label class="block text-xs mb-1">Width (px)</label>
-            <input id="fgWidth" type="number" step="0.5" min="0.5" value="6"
-              class="w-full mb-2 rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <label class="block text-xs mb-1">Color</label>
-            <input id="fgColor" type="color" value="#111827"
-              class="w-full mb-2 rounded-lg border border-slate-300 h-10 px-2 py-1" />
-            <label class="block text-xs mb-1">Opacity (0–100)</label>
-            <input id="fgOpacity" type="number" min="0" max="100" value="100"
-              class="w-full rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          <!-- Background stripe -->
-          <div class="rounded-xl border p-3">
-            <div class="font-medium mb-2">Background stripe</div>
-            <label class="block text-xs mb-1">Width (px)</label>
-            <input id="bgWidth" type="number" step="0.5" min="0.5" value="6"
-              class="w-full mb-2 rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <label class="block text-xs mb-1">Color</label>
-            <input id="bgColor" type="color" value="#e5e7eb"
-              class="w-full mb-2 rounded-lg border border-slate-300 h-10 px-2 py-1" />
-            <label class="block text-xs mb-1">Opacity (0–100)</label>
-            <input id="bgOpacity" type="number" min="0" max="100" value="100"
-              class="w-full rounded-lg border border-slate-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          <!-- Live preview -->
-          <div class="rounded-xl border p-3">
-            <div class="font-medium mb-2">Live preview</div>
-            <div id="livePreview" class="flex items-center gap-4"></div>
-          </div>
-
-          <div class="col-span-1 md:col-span-3 flex items-center justify-end gap-3 pt-2">
-            <button id="resetForm" type="button" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Reset</button>
-            <button id="saveBtn" type="submit" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700">Save pattern</button>
-          </div>
-
-          <input type="hidden" id="editingId" />
-        </form>
-      </div>
-    </section>
-
-    <!-- Library -->
-    <section>
-      <h2 class="text-xl font-semibold mb-3">Your patterns</h2>
-      <div id="emptyState" class="rounded-3xl border border-dashed p-8 text-center text-slate-500">
-        No patterns yet. Click <span class="font-medium">“New pattern”</span> to create one, or <span class="font-medium">Import JSON</span>.
-      </div>
-      <div id="libraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-    </section>
-  </div>
-
-  <!-- Modal for SVG -->
-  <div id="svgModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-3xl w-full">
-      <div class="flex items-center justify-between border-b p-4">
-        <h3 class="font-semibold">SVG Pattern Code</h3>
-        <button id="closeModal" class="text-slate-500 hover:text-slate-700">Close</button>
-      </div>
-      <div class="p-4">
-        <div class="mb-3 flex items-center gap-2">
-          <button id="copyCode" class="px-3 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Copy</button>
-          <span id="modalMeta" class="text-xs text-slate-500"></span>
-        </div>
-        <textarea id="svgCode" class="w-full h-64 rounded-xl border p-3 font-mono text-xs"></textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast -->
-  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-xl bg-slate-900 text-white shadow">
-    <span id="toastText"></span>
+      </section>
+    </main>
   </div>
 
   <script>
-    // --- Utility helpers ---
-    const $ = (sel, el = document) => el.querySelector(sel);
-    const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+    // ===== Helpers =====
+    const $ = (s, el=document) => el.querySelector(s);
+    const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+    const STORE_KEY = 'palettes-v1';
+    const uid = () => 'id_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+    const load = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); } catch { return []; } };
+    const save = (data) => localStorage.setItem(STORE_KEY, JSON.stringify(data));
 
-    const STORAGE_KEY = 'striped-patterns-v1';
-
-    function uid() {
-      return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    function rgba(hex, op100=100){
+      const v = (hex||'#000000').replace('#','');
+      const n = v.length===3 ? v.split('').map(x=>parseInt(x+x,16)) : [parseInt(v.slice(0,2),16), parseInt(v.slice(2,4),16), parseInt(v.slice(4,6),16)];
+      return `rgba(${n[0]}, ${n[1]}, ${n[2]}, ${clamp(+op100/100,0,1)})`;
     }
 
-    function loadPatterns() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch {
-        return [];
-      }
-    }
-
-    function savePatterns(list) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    }
-
-    function clamp(num, min, max) {
-      return Math.max(min, Math.min(max, num));
-    }
-
-    // Build the <pattern> markup string (minimal, reusable)
-    function buildPatternDef(p) {
-      const fgO = clamp((Number(p.fgOpacity) || 0) / 100, 0, 1);
-      const bgO = clamp((Number(p.bgOpacity) || 0) / 100, 0, 1);
-      const angle = Number(p.angle) || 0;
-      const fgW = Math.max(0.5, Number(p.fgWidth) || 0.5);
-      const bgW = Math.max(0.5, Number(p.bgWidth) || 0.5);
+    function patternDef(p){
+      const fgO = clamp((+p.fgOpacity||0)/100,0,1);
+      const bgO = clamp((+p.bgOpacity||0)/100,0,1);
+      const angle = +p.angle||0;
+      const fgW = Math.max(0.5, +p.fgWidth||0.5);
+      const bgW = Math.max(0.5, +p.bgWidth||0.5);
       const total = fgW + bgW;
-
-      const id = p.id || 'pattern';
-
-      return `
-<pattern id="${id}" patternUnits="userSpaceOnUse" width="${total}" height="${total}" patternTransform="rotate(${angle})">
-  <rect x="0" y="0" width="${total}" height="${total}" fill="transparent"/>
-  <rect x="0" y="0" width="${fgW}" height="${total}" fill="${p.fgColor}" fill-opacity="${fgO}"/>
-  <rect x="${fgW}" y="0" width="${bgW}" height="${total}" fill="${p.bgColor}" fill-opacity="${bgO}"/>
-</pattern>`.trim();
+      const id = p.id || 'pat_'+uid();
+      return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${total}" height="${total}" patternTransform="rotate(${angle})">
+        <rect width="${total}" height="${total}" fill="transparent"/>
+        <rect width="${fgW}" height="${total}" fill="${p.fgColor}" fill-opacity="${fgO}"/>
+        <rect x="${fgW}" width="${bgW}" height="${total}" fill="${p.bgColor}" fill-opacity="${bgO}"/>
+      </pattern>`;
     }
 
-    // Full SVG snippet with <defs> to copy
-    function buildCopyableSVG(p) {
-      const def = buildPatternDef(p);
-      return `
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">
-  <defs>
-    ${def}
-  </defs>
-  <rect x="0" y="0" width="120" height="80" fill="url(#${p.id})" />
-</svg>`.trim();
+    function buildPatternSVG(p){
+      const id = p.id || ('pat_'+uid());
+      const def = patternDef({ ...p, id });
+      return (`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">\n  <defs>\n    ${def}\n  </defs>\n  <rect x="0" y="0" width="120" height="80" fill="url(#${id})" />\n</svg>`).trim();
     }
 
-    // Create a preview node (square + circle)
-    function createPreviewSVG(p, size = 56) {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', `0 0 ${size * 2 + 12} ${size}`);
-      svg.setAttribute('width', size * 2 + 12);
+    function patternPreview(p, size=28){
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      svg.setAttribute('width', size);
       svg.setAttribute('height', size);
-
-      const defs = document.createElementNS(svg.namespaceURI, 'defs');
-      defs.innerHTML = buildPatternDef(p);
+      const defs = document.createElementNS(svg.namespaceURI,'defs');
+      const id = 'pat_'+(p.id || uid());
+      defs.innerHTML = patternDef({...p, id});
       svg.appendChild(defs);
-
-      const rect = document.createElementNS(svg.namespaceURI, 'rect');
-      rect.setAttribute('x', '0');
-      rect.setAttribute('y', '0');
-      rect.setAttribute('width', size);
-      rect.setAttribute('height', size);
-      rect.setAttribute('rx', '10');
-      rect.setAttribute('fill', `url(#${p.id})`);
+      const rect = document.createElementNS(svg.namespaceURI,'rect');
+      rect.setAttribute('x','0');rect.setAttribute('y','0');rect.setAttribute('width',size);rect.setAttribute('height',size);
+      rect.setAttribute('rx','8');
+      rect.setAttribute('fill', `url(#${id})`);
       svg.appendChild(rect);
-
-      const circle = document.createElementNS(svg.namespaceURI, 'circle');
-      circle.setAttribute('cx', size + 12 + size / 2);
-      circle.setAttribute('cy', size / 2);
-      circle.setAttribute('r', size / 2);
-      circle.setAttribute('fill', `url(#${p.id})`);
-      svg.appendChild(circle);
-
       return svg;
     }
 
-    // --- State & UI ---
-    let patterns = loadPatterns();
+    // ===== State =====
+    let palettes = load();
+    let currentId = palettes[0]?.id || null;
+
+    // ===== Elements =====
+    const paletteList = $('#paletteList');
+    const noPalettes = $('#noPalettes');
+    const newPaletteBtn = $('#newPaletteBtn');
 
     const editorSection = $('#editorSection');
-    const form = $('#patternForm');
-    const formTitle = $('#formTitle');
-    const editingIdInput = $('#editingId');
+    const paletteName = $('#paletteName');
+    const savePaletteName = $('#savePaletteName');
+    const deletePalette = $('#deletePalette');
 
-    const nameInput = $('#name');
-    const angleInput = $('#angle');
-    const fgWidthInput = $('#fgWidth');
-    const fgColorInput = $('#fgColor');
-    const fgOpacityInput = $('#fgOpacity');
-    const bgWidthInput = $('#bgWidth');
-    const bgColorInput = $('#bgColor');
-    const bgOpacityInput = $('#bgOpacity');
+    // Item editor controls
+    const itemType = $('#itemType');
+    const solidOptions = $('#solidOptions');
+    const solidColor = $('#solidColor');
+    const solidOpacity = $('#solidOpacity');
+    const solidOpacityNum = $('#solidOpacityNum');
 
-    const livePreview = $('#livePreview');
+    const patternOptions = $('#patternOptions');
+    const patternAngle = $('#patternAngle');
+    const patternFgWidth = $('#patternFgWidth');
+    const patternFgColor = $('#patternFgColor');
+    const patternFgOpacity = $('#patternFgOpacity');
+    const patternBgWidth = $('#patternBgWidth');
+    const patternBgColor = $('#patternBgColor');
+    const patternBgOpacity = $('#patternBgOpacity');
 
-    const libraryGrid = $('#libraryGrid');
-    const emptyState = $('#emptyState');
+    const itemPreview = $('#itemPreview');
+    const resetItem = $('#resetItem');
+    const saveItem = $('#saveItem');
+    let editingItemId = '';
 
-    const svgModal = $('#svgModal');
-    const svgCode = $('#svgCode');
-    const modalMeta = $('#modalMeta');
+    // ===== Renderers =====
+    function renderSidebar(){
+      paletteList.innerHTML='';
+      if(!palettes.length){ noPalettes.classList.remove('hidden'); editorSection.classList.add('hidden'); return; }
+      noPalettes.classList.add('hidden');
 
-    const toast = $('#toast');
-    const toastText = $('#toastText');
+      palettes.forEach(pal=>{
+        const wrap = document.createElement('div');
+        wrap.className = `rounded-2xl border p-3 ${pal.id===currentId?'ring-2 ring-indigo-500':''}`;
 
-    // Toast helper
-    function showToast(text, ms = 1400) {
-      toastText.textContent = text;
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), ms);
-    }
+        const headerBtn = document.createElement('button');
+        headerBtn.type='button';
+        headerBtn.className='w-full text-left flex items-center justify-between gap-3 hover:bg-slate-50 rounded-xl px-2 py-2';
+        headerBtn.innerHTML = `<div><div class=\"font-medium truncate\">${pal.name||'Untitled palette'}</div><div class=\"text-xs text-slate-500\">${pal.items?.length||0} item(s)</div></div>`;
+        headerBtn.addEventListener('click',()=>{ currentId = pal.id; renderSidebar(); openEditor(); });
+        wrap.appendChild(headerBtn);
 
-    function getFormData() {
-      return {
-        id: editingIdInput.value || uid(),
-        name: nameInput.value.trim() || 'Untitled',
-        angle: Number(angleInput.value || 0),
-        fgWidth: Number(fgWidthInput.value || 6),
-        fgColor: fgColorInput.value || '#000000',
-        fgOpacity: Number(fgOpacityInput.value || 100),
-        bgWidth: Number(bgWidthInput.value || 6),
-        bgColor: bgColorInput.value || '#ffffff',
-        bgOpacity: Number(bgOpacityInput.value || 100),
-      };
-    }
+        const grid = document.createElement('div');
+        grid.className = 'mt-2 grid grid-cols-6 gap-3';
+        (pal.items||[]).forEach(it=>{
+          const cell = document.createElement('div');
+          cell.className='flex flex-col items-center gap-1';
 
-    function setFormData(p) {
-      editingIdInput.value = p.id || '';
-      nameInput.value = p.name || '';
-      angleInput.value = p.angle ?? 45;
-      fgWidthInput.value = p.fgWidth ?? 6;
-      fgColorInput.value = p.fgColor || '#111827';
-      fgOpacityInput.value = p.fgOpacity ?? 100;
-      bgWidthInput.value = p.bgWidth ?? 6;
-      bgColorInput.value = p.bgColor || '#e5e7eb';
-      bgOpacityInput.value = p.bgOpacity ?? 100;
-      renderLivePreview();
-    }
+          const swatch = document.createElement('div');
+          swatch.className='w-8 h-8 rounded-lg border border-slate-200 overflow-hidden';
+          if((it.type||'rgb')==='rgb'){ swatch.style.background = rgba(it.color||'#000', it.opacity ?? 100); }
+          else { swatch.appendChild(patternPreview(it, 32)); }
 
-    function clearForm() {
-      editingIdInput.value = '';
-      nameInput.value = '';
-      angleInput.value = 45;
-      fgWidthInput.value = 6;
-      fgColorInput.value = '#111827';
-      fgOpacityInput.value = 100;
-      bgWidthInput.value = 6;
-      bgColorInput.value = '#e5e7eb';
-      bgOpacityInput.value = 100;
-      renderLivePreview();
-    }
+          const actions = document.createElement('div');
+          actions.className='flex items-center gap-1';
+          const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='p-1 rounded hover:bg-slate-100'; editBtn.innerHTML='<i data-lucide="pen" class="w-3 h-3"></i>';
+          const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='p-1 rounded hover:bg-rose-100 text-rose-600'; delBtn.innerHTML='<i data-lucide="trash" class="w-3 h-3"></i>';
+          editBtn.addEventListener('click', (e)=>{ e.stopPropagation(); currentId = pal.id; openEditor(); loadItemIntoForm(it.id); });
+          delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); removeItem(it.id); });
+          actions.append(editBtn, delBtn);
 
-    function openEditor(createMode = true, pattern = null) {
-      editorSection.classList.remove('hidden');
-      formTitle.textContent = createMode ? 'Create pattern' : 'Edit pattern';
-      if (createMode || !pattern) clearForm();
-      else setFormData(pattern);
-    }
+          cell.append(swatch, actions); grid.appendChild(cell);
+        });
+        if (pal.id===currentId) wrap.appendChild(grid);
 
-    function closeEditor() {
-      editorSection.classList.add('hidden');
-    }
-
-    function renderLivePreview() {
-      livePreview.innerHTML = '';
-      const p = getFormData();
-      const svg = createPreviewSVG(p, 72);
-      livePreview.appendChild(svg);
-    }
-
-    function renderLibrary() {
-      libraryGrid.innerHTML = '';
-      if (!patterns.length) {
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      emptyState.classList.add('hidden');
-
-      patterns.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'rounded-2xl bg-white shadow p-4 flex items-center gap-4';
-
-        const preview = createPreviewSVG(p, 56);
-
-        const info = document.createElement('div');
-        info.className = 'flex-1 min-w-0';
-        info.innerHTML = `
-          <div class="font-semibold truncate">${p.name}</div>
-          <div class="text-xs text-slate-500">Angle ${p.angle}°, fg ${p.fgWidth}px, bg ${p.bgWidth}px</div>
-        `;
-
-        const actions = document.createElement('div');
-        actions.className = 'flex flex-col gap-2';
-        actions.innerHTML = `
-          <button data-id="${p.id}" data-action="edit" class="px-3 py-1 rounded-lg border hover:bg-slate-50">Edit</button>
-          <button data-id="${p.id}" data-action="svg" class="px-3 py-1 rounded-lg border hover:bg-slate-50">Show SVG</button>
-          <button data-id="${p.id}" data-action="delete" class="px-3 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700">Remove</button>
-        `;
-
-        card.appendChild(preview);
-        card.appendChild(info);
-        card.appendChild(actions);
-
-        libraryGrid.appendChild(card);
+        paletteList.appendChild(wrap);
       });
+
+      lucide.createIcons();
     }
 
-    function upsertPattern(p) {
-      const i = patterns.findIndex(x => x.id === p.id);
-      if (i === -1) patterns.unshift(p);
-      else patterns[i] = p;
-      savePatterns(patterns);
-      renderLibrary();
+    function currentPalette(){ return palettes.find(p=>p.id===currentId); }
+
+    function openEditor(){
+      const pal = currentPalette(); if(!pal){ editorSection.classList.add('hidden'); return; }
+      editorSection.classList.remove('hidden');
+      paletteName.value = pal.name||'';
     }
 
-    function deletePattern(id) {
-      patterns = patterns.filter(p => p.id !== id);
-      savePatterns(patterns);
-      renderLibrary();
-    }
-
-    // --- Import/Export ---
-    function exportPatterns() {
-      const data = JSON.stringify(patterns, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      a.href = url;
-      a.download = `patterns-${stamp}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('JSON exported');
-    }
-
-    function normalizeImport(payload) {
-      // Accept: array of patterns OR object { patterns: [...] }
-      if (Array.isArray(payload)) return payload;
-      if (payload && Array.isArray(payload.patterns)) return payload.patterns;
-      // Single object?
-      if (payload && typeof payload === 'object' && 'name' in payload) return [payload];
-      return [];
-    }
-
-    function validatePattern(obj) {
-      const p = { ...obj };
-      // Ensure required fields with fallbacks
-      p.id = typeof p.id === 'string' && p.id ? p.id : uid();
-      p.name = typeof p.name === 'string' ? p.name : 'Imported';
-      p.angle = Number.isFinite(Number(p.angle)) ? Number(p.angle) : 45;
-      p.fgWidth = Number.isFinite(Number(p.fgWidth)) ? Number(p.fgWidth) : 6;
-      p.fgColor = typeof p.fgColor === 'string' ? p.fgColor : '#111827';
-      p.fgOpacity = Number.isFinite(Number(p.fgOpacity)) ? Number(p.fgOpacity) : 100;
-      p.bgWidth = Number.isFinite(Number(p.bgWidth)) ? Number(p.bgWidth) : 6;
-      p.bgColor = typeof p.bgColor === 'string' ? p.bgColor : '#e5e7eb';
-      p.bgOpacity = Number.isFinite(Number(p.bgOpacity)) ? Number(p.bgOpacity) : 100;
-      return p;
-    }
-
-    function mergeImported(list) {
-      let added = 0;
-      for (const raw of list) {
-        const valid = validatePattern(raw);
-        // Avoid ID collision by regenerating if the same id exists
-        if (patterns.some(x => x.id === valid.id)) {
-          valid.id = uid();
-        }
-        patterns.push(valid); // add to the end to preserve current order
-        added++;
-      }
-      savePatterns(patterns);
-      renderLibrary();
-      return added;
-    }
-
-    // --- Event wiring ---
-    $('#newPatternBtn').addEventListener('click', () => openEditor(true));
-
-    $('#closeEditor').addEventListener('click', closeEditor);
-    $('#resetForm').addEventListener('click', clearForm);
-
-    [nameInput, angleInput, fgWidthInput, fgColorInput, fgOpacityInput, bgWidthInput, bgColorInput, bgOpacityInput]
-      .forEach(el => el.addEventListener('input', renderLivePreview));
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const p = getFormData();
-      if (!p.name) {
-        alert('Please provide a name.');
-        return;
-      }
-      upsertPattern(p);
-      closeEditor();
-      clearForm();
-      showToast('Pattern saved');
+    // ===== CRUD Palettes =====
+    newPaletteBtn.addEventListener('click', ()=>{
+      const pal = { id: uid(), name: 'New palette', items: [] };
+      palettes.unshift(pal); currentId = pal.id; save(palettes);
+      renderSidebar(); openEditor();
     });
 
-    libraryGrid.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const id = btn.getAttribute('data-id');
-      const action = btn.getAttribute('data-action');
-      const p = patterns.find(x => x.id === id);
-      if (!p) return;
-
-      if (action === 'edit') {
-        openEditor(false, p);
-      } else if (action === 'delete') {
-        if (confirm(`Remove pattern “${p.name}”?`)) {
-          deletePattern(id);
-          showToast('Pattern removed');
-        }
-      } else if (action === 'svg') {
-        svgCode.value = buildCopyableSVG(p);
-        modalMeta.textContent = p.name ? `Pattern: ${p.name}` : '';
-        svgModal.classList.remove('hidden');
-        svgModal.classList.add('flex');
-      }
+    savePaletteName.addEventListener('click', ()=>{
+      const pal = currentPalette(); if(!pal) return;
+      pal.name = paletteName.value.trim() || 'Untitled palette';
+      save(palettes); renderSidebar();
     });
 
-    $('#closeModal').addEventListener('click', () => {
-      svgModal.classList.add('hidden');
-      svgModal.classList.remove('flex');
+    deletePalette.addEventListener('click', ()=>{
+      const pal = currentPalette(); if(!pal) return;
+      if(!confirm(`Delete palette "${pal.name}"?`)) return;
+      palettes = palettes.filter(p=>p.id!==pal.id); save(palettes);
+      currentId = palettes[0]?.id || null; renderSidebar(); openEditor();
     });
 
-    $('#copyCode').addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(svgCode.value);
-        const btn = $('#copyCode');
-        const old = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => (btn.textContent = old), 900);
-        showToast('Copied to clipboard');
-      } catch {
-        alert('Could not copy to clipboard.');
-      }
-    });
-
-    // Import/Export buttons
-    $('#exportBtn').addEventListener('click', exportPatterns);
-    const importInput = $('#importInput');
-    $('#importBtn').addEventListener('click', () => importInput.click());
-
-    importInput.addEventListener('change', async (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const payload = JSON.parse(text);
-        const list = normalizeImport(payload);
-        if (!list.length) {
-          alert('No patterns found in this JSON. Expected an array of pattern objects or {"patterns": [...]}');
-          importInput.value = '';
-          return;
-        }
-        const added = mergeImported(list);
-        showToast(`Imported ${added} pattern${added === 1 ? '' : 's'}`);
-      } catch (err) {
-        console.error(err);
-        alert('Invalid JSON file.');
-      } finally {
-        importInput.value = '';
-      }
-    });
-
-    // --- Initial render ---
-    function renderAll() {
-      renderLibrary();
-      renderLivePreview();
+    // ===== Item editor =====
+    function switchTypeUI(){
+      const t = itemType.value;
+      if(t==='rgb'){ solidOptions.classList.remove('hidden'); patternOptions.classList.add('hidden'); }
+      else { patternOptions.classList.remove('hidden'); solidOptions.classList.add('hidden'); }
+      renderItemPreview();
     }
-    renderAll();
+    itemType.addEventListener('change', switchTypeUI);
+
+    function resetForm(){
+      editingItemId='';
+      saveItem.textContent = 'Add item';
+      itemType.value='rgb';
+      solidColor.value='#4f46e5'; solidOpacity.value=100; solidOpacityNum.value=100;
+      patternAngle.value=45; patternFgWidth.value=6; patternFgColor.value='#111827'; patternFgOpacity.value=100; patternBgWidth.value=6; patternBgColor.value='#e5e7eb'; patternBgOpacity.value=100;
+      switchTypeUI();
+    }
+    resetItem.addEventListener('click', resetForm);
+
+    function readItem(){
+      const t = itemType.value;
+      if(t==='rgb'){
+        return { id: editingItemId || uid(), type:'rgb', color: solidColor.value, opacity: clamp(+solidOpacity.value||0,0,100) };
+      } else {
+        return { id: editingItemId || uid(), type:'pattern', angle:+patternAngle.value||0, fgWidth:+patternFgWidth.value||6, fgColor:patternFgColor.value, fgOpacity:clamp(+patternFgOpacity.value||0,0,100), bgWidth:+patternBgWidth.value||6, bgColor:patternBgColor.value, bgOpacity:clamp(+patternBgOpacity.value||0,0,100) };
+      }
+    }
+
+    function loadItemIntoForm(id){
+      const pal = currentPalette(); if(!pal) return;
+      const it = pal.items.find(x=>x.id===id); if(!it) return;
+      editingItemId = it.id; saveItem.textContent='Save changes';
+      const t = it.type; itemType.value = t; switchTypeUI();
+      if(t==='rgb'){ solidColor.value = it.color||'#000000'; solidOpacity.value = it.opacity ?? 100; solidOpacityNum.value = it.opacity ?? 100; }
+      else { patternAngle.value=it.angle??45; patternFgWidth.value=it.fgWidth??6; patternFgColor.value=it.fgColor||'#111827'; patternFgOpacity.value=it.fgOpacity??100; patternBgWidth.value=it.bgWidth??6; patternBgColor.value=it.bgColor||'#e5e7eb'; patternBgOpacity.value=it.bgOpacity??100; }
+      renderItemPreview();
+    }
+
+    function removeItem(id){
+      const pal = currentPalette(); if(!pal) return;
+      pal.items = pal.items.filter(x=>x.id!==id); save(palettes); renderSidebar();
+      if(editingItemId===id) resetForm();
+    }
+
+    saveItem.addEventListener('click', ()=>{
+      const pal = currentPalette(); if(!pal) return;
+      const it = readItem();
+      const i = pal.items.findIndex(x=>x.id===it.id);
+      if(i===-1) pal.items.push(it); else pal.items[i]=it;
+      save(palettes); renderSidebar(); resetForm();
+    });
+
+    // live preview of item being edited
+    function renderItemPreview(){
+      itemPreview.innerHTML='';
+      const it = readItem();
+      if(it.type==='rgb'){
+        itemPreview.style.background = rgba(it.color, it.opacity);
+      } else {
+        itemPreview.style.background = '';
+        itemPreview.appendChild(patternPreview(it, 64));
+      }
+    }
+
+    // link opacity inputs & field listeners for instant feedback
+    function link(rangeEl, numEl){
+      const sync = (src, dst)=>()=>{ dst.value = src.value; renderItemPreview(); };
+      rangeEl.addEventListener('input', sync(rangeEl, numEl));
+      numEl.addEventListener('input', ()=>{ const v=clamp(+numEl.value||0,0,100); numEl.value=v; rangeEl.value=v; renderItemPreview(); });
+    }
+    link(solidOpacity, solidOpacityNum);
+    [solidColor, patternAngle, patternFgWidth, patternFgColor, patternFgOpacity, patternBgWidth, patternBgColor, patternBgOpacity].forEach(el=> el.addEventListener('input', renderItemPreview));
+
+    // ===== Import/Export =====
+    function exportPalettes(){
+      const enriched = palettes.map(pal => ({
+        ...pal,
+        items: (pal.items||[]).map(it => it.type==='pattern' ? ({...it, svg: buildPatternSVG(it)}) : it)
+      }));
+      const blob = new Blob([JSON.stringify(enriched, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`palettes-${new Date().toISOString().replace(/[:.]/g,'-')}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+    $('#exportBtn').addEventListener('click', exportPalettes);
+    $('#importBtn').addEventListener('click', ()=> $('#importInput').click());
+    $('#importInput').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      try{
+        const text = await f.text(); const payload = JSON.parse(text);
+        const list = Array.isArray(payload) ? payload : (Array.isArray(payload.palettes)? payload.palettes : []);
+        if(!list.length){ alert('No palettes found in JSON. Expect an array or {"palettes": [...]}'); return; }
+        let added=0; list.forEach(raw=>{ const pal={ id: typeof raw.id==='string'&&raw.id || uid(), name: typeof raw.name==='string'? raw.name:'Imported', items: Array.isArray(raw.items)? raw.items : []}; if(palettes.some(x=>x.id===pal.id)) pal.id=uid(); palettes.push(pal); added++; });
+        save(palettes); if(!currentId) currentId=palettes[0].id; renderSidebar(); openEditor(); alert(`Imported ${added} palette${added===1?'':'s'}`);
+      }catch(err){ console.error(err); alert('Invalid JSON file'); }
+      finally{ e.target.value=''; }
+    });
+
+    // ===== Init =====
+    renderSidebar(); if(currentId) openEditor(); resetForm(); renderItemPreview();
   </script>
 </body>
 </html>
