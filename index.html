@@ -15,27 +15,26 @@
         <button id="exportBtn" type="button" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Export JSON</button>
         <input id="importInput" type="file" accept="application/json,.json" class="hidden" />
         <button id="importBtn" type="button" class="px-4 py-2 rounded-2xl border hover:bg-slate-50">Import JSON</button>
-        <button id="newPaletteBtn" type="button" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 transition">+ New palette</button>
       </div>
     </header>
 
     <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Sidebar -->
       <aside class="space-y-3">
-        <h2 class="text-lg font-semibold">Your palettes</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Your palettes</h2>
+          <button id="newPaletteBtn" type="button" class="p-2 rounded-xl border hover:bg-slate-50" title="New palette"><i data-lucide="plus" class="w-4 h-4"></i></button>
+        </div>
         <div id="paletteList" class="space-y-2"></div>
-        <div id="noPalettes" class="text-slate-500 text-sm text-center py-6">No palettes yet. Click <span class="font-medium">New palette</span> or <span class="font-medium">Import JSON</span>.</div>
+        <div id="noPalettes" class="text-slate-500 text-sm text-center py-6">No palettes yet. Click <span class="font-medium">＋</span> above or <span class="font-medium">Import JSON</span>.</div>
       </aside>
 
       <!-- Editor -->
       <section class="md:col-span-2">
         <div id="editorSection" class="hidden rounded-3xl bg-white shadow p-6 space-y-5">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <input id="paletteName" type="text" class="rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Palette name" />
-              <button id="savePaletteName" type="button" class="px-3 py-2 rounded-xl border hover:bg-slate-50">Save name</button>
-            </div>
-            <button id="deletePalette" type="button" class="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Delete palette</button>
+            <input id="paletteName" type="text" class="flex-1 rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Palette name (autosaves)" />
+            <button id="deletePalette" type="button" class="ml-3 px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Delete palette</button>
           </div>
 
           <!-- Add / Edit Item with compact controls + Live Preview -->
@@ -61,7 +60,7 @@
                 </div>
               </div>
 
-              <!-- Foreground row (color + width + opacity) -->
+              <!-- Foreground row -->
               <div id="fgRow" class="hidden grid grid-cols-3 md:grid-cols-6 gap-3 items-end">
                 <div class="col-span-2">
                   <label class="text-xs font-medium">FG Color</label>
@@ -80,7 +79,7 @@
                 </div>
               </div>
 
-              <!-- Background row (color + width + opacity) -->
+              <!-- Background row -->
               <div id="bgRow" class="hidden grid grid-cols-3 md:grid-cols-6 gap-3 items-end">
                 <div class="col-span-2">
                   <label class="text-xs font-medium">BG Color</label>
@@ -140,6 +139,8 @@
     const load = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); } catch { return []; } };
     const save = (data) => localStorage.setItem(STORE_KEY, JSON.stringify(data));
 
+    const debounce = (fn, ms=400) => { let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); } };
+
     function rgba(hex, op100=100){
       const v = (hex||'#000000').replace('#','');
       const n = v.length===3 ? v.split('').map(x=>parseInt(x+x,16)) : [parseInt(v.slice(0,2),16), parseInt(v.slice(2,4),16), parseInt(v.slice(4,6),16)];
@@ -195,7 +196,6 @@
 
     const editorSection = $('#editorSection');
     const paletteName = $('#paletteName');
-    const savePaletteName = $('#savePaletteName');
     const deletePalette = $('#deletePalette');
 
     // Item editor controls
@@ -243,28 +243,36 @@
         headerBtn.addEventListener('click',()=>{ currentId = pal.id; renderSidebar(); openEditor(); });
         wrap.appendChild(headerBtn);
 
+        // Row with delete button (left) + grid (right) — always visible
+        const row = document.createElement('div');
+        row.className = 'mt-2 flex items-start gap-2';
+        const delBtn = document.createElement('button');
+        delBtn.type='button';
+        delBtn.className='p-2 rounded-lg hover:bg-rose-100 text-rose-600';
+        delBtn.innerHTML = '<i data-lucide="trash" class="w-4 h-4"></i>';
+        delBtn.title = 'Delete palette';
+        delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); if(confirm(`Delete palette \"${pal.name}\"?`)){ palettes = palettes.filter(p=>p.id!==pal.id); save(palettes); currentId = palettes[0]?.id||null; renderSidebar(); openEditor(); }});
+
         const grid = document.createElement('div');
-        grid.className = 'mt-2 grid grid-cols-6 gap-3';
+        grid.className = 'grid grid-cols-6 gap-3 flex-1';
         (pal.items||[]).forEach(it=>{
           const cell = document.createElement('div');
           cell.className='flex flex-col items-center gap-0.5';
-
           const swatch = document.createElement('div');
           swatch.className='w-8 h-8 rounded-lg border border-slate-200 overflow-hidden';
           if((it.type||'rgb')==='rgb'){ swatch.style.background = rgba(it.color||'#000', it.opacity ?? 100); }
           else { swatch.appendChild(patternPreview(it, 32)); }
-
           const actions = document.createElement('div');
           actions.className='flex items-center gap-0.5 -mt-0.5';
           const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='p-0.5 rounded hover:bg-slate-100'; editBtn.innerHTML='<i data-lucide="pen" class="w-3 h-3"></i>';
-          const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='p-0.5 rounded hover:bg-rose-100 text-rose-600'; delBtn.innerHTML='<i data-lucide="trash" class="w-3 h-3"></i>';
+          const delItemBtn = document.createElement('button'); delItemBtn.type='button'; delItemBtn.className='p-0.5 rounded hover:bg-rose-100 text-rose-600'; delItemBtn.innerHTML='<i data-lucide="trash" class="w-3 h-3"></i>';
           editBtn.addEventListener('click', (e)=>{ e.stopPropagation(); currentId = pal.id; openEditor(); loadItemIntoForm(it.id); });
-          delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); removeItem(it.id); });
-          actions.append(editBtn, delBtn);
-
+          delItemBtn.addEventListener('click', (e)=>{ e.stopPropagation(); removeItem(it.id); });
+          actions.append(editBtn, delItemBtn);
           cell.append(swatch, actions); grid.appendChild(cell);
         });
-        if (pal.id===currentId) wrap.appendChild(grid);
+        row.append(delBtn, grid);
+        wrap.appendChild(row);
 
         paletteList.appendChild(wrap);
       });
@@ -280,18 +288,20 @@
       paletteName.value = pal.name||'';
     }
 
-    // ===== CRUD Palettes =====
+    // ===== Palette actions =====
     newPaletteBtn.addEventListener('click', ()=>{
       const pal = { id: uid(), name: 'New palette', items: [] };
       palettes.unshift(pal); currentId = pal.id; save(palettes);
       renderSidebar(); openEditor();
     });
 
-    savePaletteName.addEventListener('click', ()=>{
+    // Auto-save palette name (debounced)
+    const saveNameDebounced = debounce(()=>{
       const pal = currentPalette(); if(!pal) return;
       pal.name = paletteName.value.trim() || 'Untitled palette';
       save(palettes); renderSidebar();
-    });
+    }, 400);
+    paletteName.addEventListener('input', saveNameDebounced);
 
     deletePalette.addEventListener('click', ()=>{
       const pal = currentPalette(); if(!pal) return;
