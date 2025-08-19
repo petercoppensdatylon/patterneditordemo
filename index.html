@@ -38,46 +38,79 @@
             <button id="deletePalette" type="button" class="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Delete palette</button>
           </div>
 
-          <!-- Add / Edit Item with Live Preview -->
+          <!-- Add / Edit Item with compact controls + Live Preview -->
           <div class="grid md:grid-cols-3 gap-6">
             <div class="md:col-span-2 rounded-2xl border p-4 space-y-4">
               <h3 class="font-semibold">Add / Edit Item</h3>
-              <div class="grid md:grid-cols-3 gap-4">
-                <div class="col-span-1 space-y-2">
-                  <label class="text-sm font-medium">Type</label>
+
+              <!-- Type + Angle (compact) -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                <div>
+                  <label class="text-xs font-medium">Type</label>
                   <select id="itemType" class="w-full rounded-xl border px-2 py-2">
                     <option value="rgb">Solid RGB</option>
                     <option value="pattern">Pattern</option>
                   </select>
                 </div>
+                <div id="angleWrap" class="sm:col-span-2 hidden">
+                  <label class="text-xs font-medium">Angle</label>
+                  <div class="flex items-center gap-2">
+                    <input id="angleRange" type="range" min="-180" max="180" value="45" class="flex-1" />
+                    <input id="angleNum" type="number" min="-180" max="180" value="45" class="w-20 rounded border px-2 py-1" />
+                  </div>
+                </div>
+              </div>
 
-                <!-- Solid options -->
-                <div id="solidOptions" class="col-span-1 space-y-2">
-                  <label class="text-sm font-medium">Color</label>
-                  <input id="solidColor" type="color" value="#4f46e5" class="w-full h-10 border rounded" />
-                  <label class="text-sm font-medium">Opacity</label>
+              <!-- Foreground row (color + width + opacity) -->
+              <div id="fgRow" class="hidden grid grid-cols-3 md:grid-cols-6 gap-3 items-end">
+                <div class="col-span-2">
+                  <label class="text-xs font-medium">FG Color</label>
+                  <input id="patternFgColor" type="color" value="#111827" class="w-full h-9 border rounded" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium">FG Width</label>
+                  <input id="patternFgWidth" type="number" step="0.5" min="0.5" value="6" class="w-full rounded border px-2 py-1" />
+                </div>
+                <div class="col-span-2">
+                  <label class="text-xs font-medium">FG Opacity</label>
+                  <div class="flex items-center gap-2">
+                    <input id="fgOpacityRange" type="range" min="0" max="100" value="100" class="flex-1" />
+                    <input id="patternFgOpacity" type="number" min="0" max="100" value="100" class="w-16 rounded border px-2 py-1" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Background row (color + width + opacity) -->
+              <div id="bgRow" class="hidden grid grid-cols-3 md:grid-cols-6 gap-3 items-end">
+                <div class="col-span-2">
+                  <label class="text-xs font-medium">BG Color</label>
+                  <input id="patternBgColor" type="color" value="#e5e7eb" class="w-full h-9 border rounded" />
+                </div>
+                <div>
+                  <label class="text-xs font-medium">BG Width</label>
+                  <input id="patternBgWidth" type="number" step="0.5" min="0.5" value="6" class="w-full rounded border px-2 py-1" />
+                </div>
+                <div class="col-span-2">
+                  <label class="text-xs font-medium">BG Opacity</label>
+                  <div class="flex items-center gap-2">
+                    <input id="bgOpacityRange" type="range" min="0" max="100" value="100" class="flex-1" />
+                    <input id="patternBgOpacity" type="number" min="0" max="100" value="100" class="w-16 rounded border px-2 py-1" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Solid controls compact -->
+              <div id="solidRow" class="grid grid-cols-3 md:grid-cols-6 gap-3 items-end">
+                <div class="col-span-2">
+                  <label class="text-xs font-medium">Color</label>
+                  <input id="solidColor" type="color" value="#4f46e5" class="w-full h-9 border rounded" />
+                </div>
+                <div class="col-span-3 md:col-span-4">
+                  <label class="text-xs font-medium">Opacity</label>
                   <div class="flex items-center gap-2">
                     <input id="solidOpacity" type="range" min="0" max="100" value="100" class="flex-1" />
                     <input id="solidOpacityNum" type="number" min="0" max="100" value="100" class="w-16 rounded border px-2 py-1" />
                   </div>
-                </div>
-
-                <!-- Pattern options -->
-                <div id="patternOptions" class="col-span-1 space-y-2 hidden">
-                  <label class="text-sm font-medium">Angle</label>
-                  <input id="patternAngle" type="number" value="45" class="w-full rounded border px-2 py-1" />
-                  <label class="text-sm font-medium">FG Width</label>
-                  <input id="patternFgWidth" type="number" value="6" class="w-full rounded border px-2 py-1" />
-                  <label class="text-sm font-medium">FG Color</label>
-                  <input id="patternFgColor" type="color" value="#111827" class="w-full h-10 border rounded" />
-                  <label class="text-sm font-medium">FG Opacity</label>
-                  <input id="patternFgOpacity" type="number" value="100" class="w-full rounded border px-2 py-1" />
-                  <label class="text-sm font-medium">BG Width</label>
-                  <input id="patternBgWidth" type="number" value="6" class="w-full rounded border px-2 py-1" />
-                  <label class="text-sm font-medium">BG Color</label>
-                  <input id="patternBgColor" type="color" value="#e5e7eb" class="w-full h-10 border rounded" />
-                  <label class="text-sm font-medium">BG Opacity</label>
-                  <input id="patternBgOpacity" type="number" value="100" class="w-full rounded border px-2 py-1" />
                 </div>
               </div>
 
@@ -88,7 +121,7 @@
             </div>
 
             <!-- Compact Live Item Preview (no title) -->
-            <div class="rounded-2xl border p-3">
+            <div class="rounded-2xl border p-3 flex items-center justify-center">
               <div id="itemPreview" class="w-16 h-16 rounded-xl border shadow-inner"></div>
             </div>
           </div>
@@ -167,18 +200,25 @@
 
     // Item editor controls
     const itemType = $('#itemType');
-    const solidOptions = $('#solidOptions');
+    const angleWrap = $('#angleWrap');
+    const angleRange = $('#angleRange');
+    const angleNum = $('#angleNum');
+
+    const solidRow = $('#solidRow');
     const solidColor = $('#solidColor');
     const solidOpacity = $('#solidOpacity');
     const solidOpacityNum = $('#solidOpacityNum');
 
-    const patternOptions = $('#patternOptions');
-    const patternAngle = $('#patternAngle');
+    const fgRow = $('#fgRow');
     const patternFgWidth = $('#patternFgWidth');
     const patternFgColor = $('#patternFgColor');
+    const fgOpacityRange = $('#fgOpacityRange');
     const patternFgOpacity = $('#patternFgOpacity');
+
+    const bgRow = $('#bgRow');
     const patternBgWidth = $('#patternBgWidth');
     const patternBgColor = $('#patternBgColor');
+    const bgOpacityRange = $('#bgOpacityRange');
     const patternBgOpacity = $('#patternBgOpacity');
 
     const itemPreview = $('#itemPreview');
@@ -207,7 +247,7 @@
         grid.className = 'mt-2 grid grid-cols-6 gap-3';
         (pal.items||[]).forEach(it=>{
           const cell = document.createElement('div');
-          cell.className='flex flex-col items-center gap-1';
+          cell.className='flex flex-col items-center gap-0.5';
 
           const swatch = document.createElement('div');
           swatch.className='w-8 h-8 rounded-lg border border-slate-200 overflow-hidden';
@@ -215,9 +255,9 @@
           else { swatch.appendChild(patternPreview(it, 32)); }
 
           const actions = document.createElement('div');
-          actions.className='flex items-center gap-1';
-          const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='p-1 rounded hover:bg-slate-100'; editBtn.innerHTML='<i data-lucide="pen" class="w-3 h-3"></i>';
-          const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='p-1 rounded hover:bg-rose-100 text-rose-600'; delBtn.innerHTML='<i data-lucide="trash" class="w-3 h-3"></i>';
+          actions.className='flex items-center gap-0.5 -mt-0.5';
+          const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='p-0.5 rounded hover:bg-slate-100'; editBtn.innerHTML='<i data-lucide="pen" class="w-3 h-3"></i>';
+          const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='p-0.5 rounded hover:bg-rose-100 text-rose-600'; delBtn.innerHTML='<i data-lucide="trash" class="w-3 h-3"></i>';
           editBtn.addEventListener('click', (e)=>{ e.stopPropagation(); currentId = pal.id; openEditor(); loadItemIntoForm(it.id); });
           delBtn.addEventListener('click', (e)=>{ e.stopPropagation(); removeItem(it.id); });
           actions.append(editBtn, delBtn);
@@ -263,8 +303,11 @@
     // ===== Item editor =====
     function switchTypeUI(){
       const t = itemType.value;
-      if(t==='rgb'){ solidOptions.classList.remove('hidden'); patternOptions.classList.add('hidden'); }
-      else { patternOptions.classList.remove('hidden'); solidOptions.classList.add('hidden'); }
+      const isPattern = t==='pattern';
+      angleWrap.classList.toggle('hidden', !isPattern);
+      fgRow.classList.toggle('hidden', !isPattern);
+      bgRow.classList.toggle('hidden', !isPattern);
+      solidRow.classList.toggle('hidden', isPattern);
       renderItemPreview();
     }
     itemType.addEventListener('change', switchTypeUI);
@@ -273,8 +316,10 @@
       editingItemId='';
       saveItem.textContent = 'Add item';
       itemType.value='rgb';
+      angleRange.value=45; angleNum.value=45;
       solidColor.value='#4f46e5'; solidOpacity.value=100; solidOpacityNum.value=100;
-      patternAngle.value=45; patternFgWidth.value=6; patternFgColor.value='#111827'; patternFgOpacity.value=100; patternBgWidth.value=6; patternBgColor.value='#e5e7eb'; patternBgOpacity.value=100;
+      patternFgWidth.value=6; patternFgColor.value='#111827'; fgOpacityRange.value=100; patternFgOpacity.value=100;
+      patternBgWidth.value=6; patternBgColor.value='#e5e7eb'; bgOpacityRange.value=100; patternBgOpacity.value=100;
       switchTypeUI();
     }
     resetItem.addEventListener('click', resetForm);
@@ -284,7 +329,7 @@
       if(t==='rgb'){
         return { id: editingItemId || uid(), type:'rgb', color: solidColor.value, opacity: clamp(+solidOpacity.value||0,0,100) };
       } else {
-        return { id: editingItemId || uid(), type:'pattern', angle:+patternAngle.value||0, fgWidth:+patternFgWidth.value||6, fgColor:patternFgColor.value, fgOpacity:clamp(+patternFgOpacity.value||0,0,100), bgWidth:+patternBgWidth.value||6, bgColor:patternBgColor.value, bgOpacity:clamp(+patternBgOpacity.value||0,0,100) };
+        return { id: editingItemId || uid(), type:'pattern', angle:+angleNum.value||0, fgWidth:+patternFgWidth.value||6, fgColor:patternFgColor.value, fgOpacity:clamp(+patternFgOpacity.value||0,0,100), bgWidth:+patternBgWidth.value||6, bgColor:patternBgColor.value, bgOpacity:clamp(+patternBgOpacity.value||0,0,100) };
       }
     }
 
@@ -294,7 +339,7 @@
       editingItemId = it.id; saveItem.textContent='Save changes';
       const t = it.type; itemType.value = t; switchTypeUI();
       if(t==='rgb'){ solidColor.value = it.color||'#000000'; solidOpacity.value = it.opacity ?? 100; solidOpacityNum.value = it.opacity ?? 100; }
-      else { patternAngle.value=it.angle??45; patternFgWidth.value=it.fgWidth??6; patternFgColor.value=it.fgColor||'#111827'; patternFgOpacity.value=it.fgOpacity??100; patternBgWidth.value=it.bgWidth??6; patternBgColor.value=it.bgColor||'#e5e7eb'; patternBgOpacity.value=it.bgOpacity??100; }
+      else { angleRange.value = it.angle ?? 45; angleNum.value = it.angle ?? 45; patternFgWidth.value=it.fgWidth??6; patternFgColor.value=it.fgColor||'#111827'; fgOpacityRange.value=it.fgOpacity??100; patternFgOpacity.value=it.fgOpacity??100; patternBgWidth.value=it.bgWidth??6; patternBgColor.value=it.bgColor||'#e5e7eb'; bgOpacityRange.value=it.bgOpacity??100; patternBgOpacity.value=it.bgOpacity??100; }
       renderItemPreview();
     }
 
@@ -324,14 +369,24 @@
       }
     }
 
-    // link opacity inputs & field listeners for instant feedback
-    function link(rangeEl, numEl){
-      const sync = (src, dst)=>()=>{ dst.value = src.value; renderItemPreview(); };
-      rangeEl.addEventListener('input', sync(rangeEl, numEl));
-      numEl.addEventListener('input', ()=>{ const v=clamp(+numEl.value||0,0,100); numEl.value=v; rangeEl.value=v; renderItemPreview(); });
+    // link range + number pairs and repaint
+    function linkRangeNumber(rangeEl, numEl, min=-180, max=180){
+      const clampN = v => Math.min(max, Math.max(min, v));
+      rangeEl.addEventListener('input', ()=>{ numEl.value = rangeEl.value; renderItemPreview(); });
+      numEl.addEventListener('input', ()=>{ const v = clampN(+numEl.value||0); numEl.value = v; rangeEl.value = v; renderItemPreview(); });
     }
-    link(solidOpacity, solidOpacityNum);
-    [solidColor, patternAngle, patternFgWidth, patternFgColor, patternFgOpacity, patternBgWidth, patternBgColor, patternBgOpacity].forEach(el=> el.addEventListener('input', renderItemPreview));
+    linkRangeNumber(angleRange, angleNum, -180, 180);
+
+    function linkOpacity(rangeEl, numEl){
+      rangeEl.addEventListener('input', ()=>{ numEl.value = rangeEl.value; renderItemPreview(); });
+      numEl.addEventListener('input', ()=>{ const v = clamp(+numEl.value||0,0,100); numEl.value=v; rangeEl.value=v; renderItemPreview(); });
+    }
+    linkOpacity(solidOpacity, solidOpacityNum);
+    linkOpacity(fgOpacityRange, patternFgOpacity);
+    linkOpacity(bgOpacityRange, patternBgOpacity);
+
+    // continuous preview on input
+    [solidColor, patternFgWidth, patternFgColor, patternBgWidth, patternBgColor].forEach(el=> el.addEventListener('input', renderItemPreview));
 
     // ===== Import/Export =====
     function exportPalettes(){
