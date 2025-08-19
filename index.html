@@ -31,13 +31,7 @@
         </div>
         <div id="paletteList" class="space-y-2"></div>
         <div id="noPalettes" class="rounded-2xl border border-dashed text-slate-600 text-sm text-center py-8 px-4 bg-white/60">
-          <div class="mb-3">No palettes yet.</div>
-          <button id="createFirstBtn" type="button"
-                  class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>New palette</span>
-          </button>
-          <div class="mt-3 text-xs text-slate-500">or Import JSON</div>
+          No palettes yet. Use the <span class="font-medium">＋</span> above or Import JSON.
         </div>
       </aside>
 
@@ -46,7 +40,6 @@
         <div id="editorSection" class="hidden rounded-3xl bg-white shadow p-6 space-y-5">
           <div class="flex items-center justify-between">
             <input id="paletteName" type="text" class="flex-1 rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Palette name (autosaves)" />
-            <button id="deletePalette" type="button" class="ml-3 px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700">Delete palette</button>
           </div>
 
           <!-- Add / Edit Item with compact controls + Live Preview -->
@@ -177,12 +170,7 @@
     function buildPatternSVG(p){
       const id = p.id || ('pat_'+uid());
       const def = patternDef({ ...p, id });
-      return (`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">
-  <defs>
-    ${def}
-  </defs>
-  <rect x="0" y="0" width="120" height="80" fill="url(#${id})" />
-</svg>`).trim();
+      return (`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">\n  <defs>\n    ${def}\n  </defs>\n  <rect x="0" y="0" width="120" height="80" fill="url(#${id})" />\n</svg>`).trim();
     }
 
     function patternPreview(p, size=28){
@@ -213,7 +201,6 @@
 
     const editorSection = $('#editorSection');
     const paletteName = $('#paletteName');
-    const deletePalette = $('#deletePalette');
 
     // Item editor controls
     const itemType = $('#itemType');
@@ -319,13 +306,6 @@
       save(palettes); renderSidebar();
     }, 400);
     paletteName.addEventListener('input', saveNameDebounced);
-
-    deletePalette.addEventListener('click', ()=>{
-      const pal = currentPalette(); if(!pal) return;
-      if(!confirm(`Delete palette "${pal.name}"?`)) return;
-      palettes = palettes.filter(p=>p.id!==pal.id); save(palettes);
-      currentId = palettes[0]?.id || null; renderSidebar(); openEditor();
-    });
 
     // ===== Item editor =====
     function switchTypeUI(){
@@ -439,14 +419,8 @@
     });
 
     // ===== Init =====
-    // Ensure icons render immediately
     document.addEventListener('DOMContentLoaded', () => { try { lucide.createIcons(); } catch(e){} });
-
     renderSidebar(); if(currentId) openEditor(); resetForm(); renderItemPreview();
-
-    // Hook the empty-state "New palette" button (exists only when empty)
-    const firstBtn = document.getElementById('createFirstBtn');
-    if (firstBtn) firstBtn.addEventListener('click', () => newPaletteBtn.click());
   </script>
 </body>
 </html>
